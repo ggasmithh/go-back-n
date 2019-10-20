@@ -24,33 +24,28 @@
 
 using namespace std;
 
-int file_writer(string data) {
-    // Write file
-    ofstream output("dataReceived.txt", ios_base::trunc);
-    output << data;
-    output.close();
-
-    return 0;
-}
-
-
 int main(int, char* argv[]) {
     struct sockaddr_in server;
     struct sockaddr_in client;
-    int port;
-    const char *transaction_end = "1234567";
     char recv_buffer[MAX_BUFFER_SIZE];
+    char send_buffer[MAX_BUFFER_SIZE];
     char file_buffer[MAX_BUFFER_SIZE];
     string complete_data = "";
     int sockfd;
     
-    istringstream(argv[1]) >> port;
+    const char *emulator_host = argv[1];
+    int recv_port;
+    int send_port;
+    const char *filename = argv[4];
+    
+    istringstream(argv[2]) >> recv_port;
+    istringstream(argv[3]) >> send_port;
 
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
  
     memset((char *)&server, 0, sizeof(server));
     server.sin_family = AF_INET;
-    server.sin_port = htons(port);
+    server.sin_port = htons(recv_port);
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     bind(sockfd, (struct sockaddr *)&server, sizeof(server));
     
@@ -66,26 +61,23 @@ int main(int, char* argv[]) {
         packet pkt(0, 0, 30, null_data);
         pkt.deserialize(recv_buffer);
 
-        string data = pkt.getData();
-
-        char compare_data[data.length() + 1];
-        strcpy(compare_data, data.c_str());
-
-        if(strcmp(compare_data, transaction_end) == 0) {
+        if(pkt.getType() == 3) {
+            packet end_pkt(2, 0, 0, NULL);
+            end_pkt.serialize(send_buffer);
+            server.sin_port = htons(send_port);
+            sendto(sockfd, send_buffer, sizeof(send_buffer), 0, (struct sockaddr *)&server, sizeof(server));
             break;
         } else {
-            complete_data += data;
+            complete_data += pkt.getData();
         }
     } 
     
     close(sockfd);
 
-    file_writer(complete_data);
-
-    // // Write file
-    // ofstream output("dataReceived.txt", ios_base::trunc);
-    // output << complete_data;
-    // output.close();
+    ofstream output(filename, ios_base::trunc);
+    output << complete_data;
+    output.close();
 
     return 0;
 }
+
