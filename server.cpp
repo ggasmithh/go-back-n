@@ -2,6 +2,9 @@
 //  NetID: gas203
 
 //  Sources Consulted
+//  1) First programming assignment
+//  1) https://en.wikipedia.org/wiki/Go-Back-N_ARQ
+//
 
 #include <unistd.h>
 #include <iostream>
@@ -21,6 +24,7 @@
 #include "packet.cpp"
 
 #define MAX_BUFFER_SIZE 256
+#define N 7
 
 using namespace std;
 
@@ -46,6 +50,8 @@ int main(int, char* argv[]) {
     istringstream(argv[3]) >> send_port;
 
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    ofstream arrival("arrival.log", ios_base::trunc);
  
     memset((char *)&recv_server, 0, sizeof(recv_server));
     recv_server.sin_family = AF_INET;
@@ -59,26 +65,46 @@ int main(int, char* argv[]) {
     send_server.sin_port = htons(send_port);
     send_server.sin_addr.s_addr = htonl(INADDR_ANY); 
 
+    int expected_seq_num = 0;
+
     while (1) {
+
         memset((char *)&recv_buffer, 0, sizeof(recv_buffer));
+        
         recvfrom(sockfd, recv_buffer, sizeof(recv_buffer), 0, (struct sockaddr *)&recv_server, &rslen);
+                
 
         packet pkt(0, 0, 30, null_data);
         pkt.deserialize(recv_buffer);
+
+        arrival << pkt.getSeqNum() << endl;
 
         if (pkt.getType() == 3) {
             packet end_pkt(2, 0, 0, NULL);
             end_pkt.serialize(send_buffer);
             sendto(sockfd, send_buffer, sizeof(send_buffer), 0, (struct sockaddr *)&send_server, sizeof(send_server));
             break;
-        } else {
-            packet ack(0, 0, 0, NULL);
+        } else if (pkt.getSeqNum() == expected_seq_num) {
+
+            packet ack(0, expected_seq_num, 0, NULL);
             ack.serialize(send_buffer);
+            cout << "CORRECT: Got " << pkt.getSeqNum() << " and " << "expected" <<  expected_seq_num << endl;
             sendto(sockfd, send_buffer, sizeof(send_buffer), 0, (struct sockaddr *)&send_server, sizeof(send_server));
-            complete_data += pkt.getData();
+
+            expected_seq_num = (expected_seq_num + 1) % (N + 1);
+
+            complete_data += pkt.getData();     
+        } else {
+            // whoof i'm really repeating myself here...
+            packet ack(0, expected_seq_num, 0, NULL);
+            ack.serialize(send_buffer);
+            cout << "WRONG: Got " << pkt.getSeqNum() << " and " << "expected" <<  expected_seq_num << endl;
+            sendto(sockfd, send_buffer, sizeof(send_buffer), 0, (struct sockaddr *)&send_server, sizeof(send_server));
         }
     } 
     
+
+    cout << "closing socket" << endl;
     close(sockfd);
 
     ofstream output(filename, ios_base::trunc);

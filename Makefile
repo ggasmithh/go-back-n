@@ -1,10 +1,10 @@
 all: client server
 
 client: client.o
-	g++ client.cpp -g -lstdc++ -o client
+	g++ client.cpp -lstdc++ -o client
 	
 server: server.o
-	g++ server.cpp -g -lstdc++ -o server
+	g++ server.cpp -lstdc++ -o server
 	
 clean:
 	\rm *.o client server
