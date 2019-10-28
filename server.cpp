@@ -1,5 +1,5 @@
 //  Author: Garrett Smith, Tom Jackson
-//  NetID: gas203
+//  NetID: gas203, tpj24
 
 //  Sources Consulted
 //  1) First programming assignment
