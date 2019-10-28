@@ -1,4 +1,4 @@
-//  Author: Garrett Smith
+//  Author: Garrett Smith, Tom Jackson
 //  NetID: gas203
 
 //  Sources Consulted
@@ -71,8 +71,7 @@ int main(int, char* argv[]) {
 
         memset((char *)&recv_buffer, 0, sizeof(recv_buffer));
         
-        recvfrom(sockfd, recv_buffer, sizeof(recv_buffer), 0, (struct sockaddr *)&recv_server, &rslen);
-                
+        recvfrom(sockfd, recv_buffer, sizeof(recv_buffer), 0, (struct sockaddr *)&recv_server, &rslen);             
 
         packet pkt(0, 0, 30, null_data);
         pkt.deserialize(recv_buffer);
@@ -88,7 +87,6 @@ int main(int, char* argv[]) {
 
             packet ack(0, expected_seq_num, 0, NULL);
             ack.serialize(send_buffer);
-            cout << "CORRECT: Got " << pkt.getSeqNum() << " and " << "expected" <<  expected_seq_num << endl;
             sendto(sockfd, send_buffer, sizeof(send_buffer), 0, (struct sockaddr *)&send_server, sizeof(send_server));
 
             expected_seq_num = (expected_seq_num + 1) % (N + 1);
@@ -98,13 +96,10 @@ int main(int, char* argv[]) {
             // whoof i'm really repeating myself here...
             packet ack(0, expected_seq_num, 0, NULL);
             ack.serialize(send_buffer);
-            cout << "WRONG: Got " << pkt.getSeqNum() << " and " << "expected" <<  expected_seq_num << endl;
             sendto(sockfd, send_buffer, sizeof(send_buffer), 0, (struct sockaddr *)&send_server, sizeof(send_server));
         }
     } 
     
-
-    cout << "closing socket" << endl;
     close(sockfd);
 
     ofstream output(filename, ios_base::trunc);

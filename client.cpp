@@ -1,4 +1,4 @@
-//  Authors: Garrett Smith, Tom Jackson
+//  Author: Garrett Smith, Tom Jackson
 //  NetID: gas203, 
 
 //  Sources Consulted
@@ -102,18 +102,13 @@ int main(int, char *argv[]) {
     // May not be a full 30 characters, so we want the loop to continue
     while (file_cur_loc + actual_data_length < file_length) {
 
-        cout << "Loop Start" << endl;
-
         memset(data_array, 0, MAX_PACKET_DATA_LENGTH);
 
         if (next_seq_num < send_base + N) {
-            cout << "next_seq_num < send_base + N" << endl;
 
             file_cur_loc = (next_seq_num * MAX_PACKET_DATA_LENGTH) + file_loc_offset;
             actual_data_length = min(MAX_PACKET_DATA_LENGTH, file_length - file_cur_loc);
-            
-            cout << "From " << file_cur_loc << " to " << file_cur_loc + actual_data_length << " for file that is " << file_length << " long." << endl;
-
+        
             string data = file_contents.substr(file_cur_loc, actual_data_length);
             strcpy(data_array, data.c_str());
 
@@ -174,7 +169,6 @@ int main(int, char *argv[]) {
 
 
         if (!timeout) {
-            cout << "Making ACK packet" << endl;
             packet ack(0, 0, 30, null_data);
             ack.deserialize(recv_buffer);
 
@@ -187,7 +181,6 @@ int main(int, char *argv[]) {
          
 
         if (send_base == next_seq_num) {
-            cout << "send_base == next_seq_num" << endl;
             alarm(0);
             timeout = false;
         } else {
@@ -209,7 +202,6 @@ int main(int, char *argv[]) {
     pkt.deserialize(recv_buffer);
 
     if(pkt.getType() == 2) {
-        cout << "closing socket" << endl;
         close(sockfd);
         client_seq_num.close();
         client_ack.close();
